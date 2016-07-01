@@ -1,0 +1,27 @@
+{
+  "type":"FeatureCollection",
+  "features":[{% if total_results > 0 %}{% for item in data %}
+    {
+      "type":"Feature",
+      "geometry":{
+        "type":"Polygon",
+        "coordinates":[
+          [[{{ item.upperLeftCornerLongitude }}, {{ item.upperLeftCornerLatitude }}],
+           [{{ item.upperRightCornerLongitude }}, {{ item.upperRightCornerLatitude }}],
+           [{{ item.lowerRightCornerLongitude }}, {{ item.lowerRightCornerLatitude }}],
+           [{{ item.lowerLeftCornerLongitude }}, {{ item.lowerLeftCornerLatitude }}],
+           [{{ item.upperLeftCornerLongitude }}, {{ item.upperLeftCornerLatitude }}]]
+        ]
+      },
+      "properties":{
+        "title":"{% set satellite, sensor = item.sensor.split('_') %}Entity ID: {{ item.sceneID }}, Satellite: {{ satellite }}, Sensor: {{ sensor }}, Acquisition Date: {{ item.acquisitionDate}}",
+        "id":"{{ url_root }}json/scene?sceneid={{ item.sceneID }}",
+        "updated":"{{ item.dateUpdated }}",
+        "date":"{{ item.acquisitionDate }}",
+        "author":" INPE - National Institute for Space Research",
+        "browse_image_url":"http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}",
+        "original_source_metadata":"http://cbers2.dpi.inpe.br/xyz/sceneid.php?=sceneid={{ item.sceneID }}"
+      }
+    }{% if loop.index < count %},{% endif %}{%endfor%}{%endif%}
+  ]
+}

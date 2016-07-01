@@ -1,0 +1,45 @@
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:content="http://purl.org/rss/1.0/modules/content/"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
+      xmlns:georss="http://www.georss.org/georss" xmlns:os="http://a9.com/-/spec/opensearch/1.1/"
+      xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/"
+      xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/" xml:lang="en">
+    <title>OS Scene</title>
+    <id>
+        {{ url }}
+    </id>
+    <link href="{{ url_root }}osdd" rel="search" title="OS Scene" type="application/opensearchdescription+xml"/>
+    <author>
+        <name>INPE - National Institute for Space Research</name>
+        <email>mzaglia@dpi.inpe.br</email>
+    </author>
+    <os:totalResults>{{ total_results }}</os:totalResults>
+    <os:startIndex>{{ start_index }}</os:startIndex>
+    <os:itemsPerPage>{{ count }}</os:itemsPerPage>{% if total_results > 0 %}{% for item in data %}
+    <entry>
+        <title>
+            {% set satellite, sensor = item.sensor.split('_') %}Entity ID: {{ item.sceneID }}, Satellite: {{ satellite }}, Sensor: {{ sensor }}, Acquisition Date: {{ item.acquisitionDate}}
+        </title>
+        <id>
+            {{ url_root }}atom/scene?sceneid={{ item.sceneID }}
+        </id>
+        <dc:date>{{ item.acquisitionDate }}</dc:date>
+        <updated>{{ item.dateUpdated }}</updated>
+        <pubDate>{{ item.dateUpdated }}</pubDate>
+        <author><name>INPE - National Institute for Space Research</name></author>
+        <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID  | replace('&', '&amp;') }}" rel="via" title="Original source metadata" type="text/xml"/>
+        <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID | replace('&', '&amp;')  }}" rel="alternate" title="Alternate metadata URL" type="text/xml"/>
+        <link href="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL | replace('&', '&amp;')  }}" rel="icon" title="Browse image URL" type="image/jpeg"/>
+        <link href="http://cbers2.dpi.inpe.br/xyz/{{ item.cartURL | replace('&', '&amp;')  }}" rel="enclosure" title="Product download URL" type="text/html"/>
+        <georss:polygon>
+            {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude }} {{ item.upperRightCornerLatitude }} {{ item.upperRightCornerLongitude }} {{ item.lowerRightCornerLatitude }} {{ item.lowerRightCornerLongitude }} {{ item.lowerLeftCornerLatitude }} {{ item.lowerLeftCornerLongitude }} {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude}}
+        </georss:polygon>
+        <content:encoded>
+            <![CDATA[<div><a href="{{ url_root }}atom/scene?sceneid={{ item.sceneID }}" target="_blank"><img src="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}" width="250px" height="250px"/></a></div>]]>
+        </content:encoded>
+        <description>
+            <![CDATA[<div><img src="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}" width="250px" height="250px"/></div>]]>
+        </description>
+    </entry>{% endfor %}{% endif %}
+</feed>
