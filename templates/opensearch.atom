@@ -25,8 +25,7 @@
             {{ url_root }}atom/scene?sceneid={{ item.sceneID }}
         </id>
         <dc:date>{{ item.acquisitionDate }}</dc:date>
-        <updated>{{ item.dateUpdated }}</updated>
-        <pubDate>{{ item.dateUpdated }}</pubDate>
+        <updated>{{ item.dateUpdated | replace(' ', 'T') }}Z</updated>
         <author><name>INPE - National Institute for Space Research</name></author>
         <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID  | replace('&', '&amp;') }}" rel="via" title="Original source metadata" type="text/xml"/>
         <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID | replace('&', '&amp;')  }}" rel="alternate" title="Alternate metadata URL" type="text/xml"/>
