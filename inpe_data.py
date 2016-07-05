@@ -1,5 +1,8 @@
 from urllib import request
 from xmltodict import parse
+import socket
+
+socket.setdefaulttimeout(10)
 
 
 def get_bbox(bbox, search_terms, time_start, time_end, start, count):
@@ -11,15 +14,22 @@ def get_bbox(bbox, search_terms, time_start, time_end, start, count):
         url += "&start_date=" + time_start
     if time_end is not None:
         url += "&end_date=" + time_end
-    result = parse(request.urlopen(url))
+    try:
+        result = parse(request.urlopen(url))
+    except socket.timeout:
+        raise IOError
     if 'metaData' in result['searchResponse']:
         return result['searchResponse']['metaData'], int(result['searchResponse']['totalRecords'])
     return {}, int(result['searchResponse']['totalRecords'])
 
+
 def get_scene(sceneid):
     url = "http://cbers2.dpi.inpe.br/xyz/sceneid.php?" \
           "sceneid={}".format(sceneid)
-    result = parse(request.urlopen(url))
+    try:
+        result = parse(request.urlopen(url))
+    except socket.timeout:
+        raise IOError
     if 'metaData' in result['searchResponse']:
         return result['searchResponse']['metaData'], int(result['searchResponse']['totalRecords'])
     return {}, int(result['searchResponse']['totalRecords'])
