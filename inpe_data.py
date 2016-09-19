@@ -7,7 +7,7 @@ socket.setdefaulttimeout(10)
 
 def get_bbox(bbox, search_terms, time_start, time_end, start, count):
     west, south, east, north = bbox.split(',')
-    url = "http://cbers2.dpi.inpe.br/xyz/latlong.php?" \
+    url = "http://www.dgi.inpe.br/cwic_cb4/latlong.php?" \
           "dataset={}&north={}&south={}&east={}&west={}" \
           "&startrec={}&maxrecs={}".format(search_terms, north, south, east, west, start, count)
     if time_start is not None:
@@ -24,7 +24,7 @@ def get_bbox(bbox, search_terms, time_start, time_end, start, count):
 
 
 def get_scene(sceneid):
-    url = "http://cbers2.dpi.inpe.br/xyz/sceneid.php?" \
+    url = "http://www.dgi.inpe.br/cwic_cb4/sceneid.php?" \
           "sceneid={}".format(sceneid)
     try:
         result = parse(request.urlopen(url))

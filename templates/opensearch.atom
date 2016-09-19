@@ -27,10 +27,10 @@
         <dc:date>{{ item.acquisitionDate }}</dc:date>
         <updated>{{ item.dateUpdated | replace(' ', 'T') }}Z</updated>
         <author><name>INPE - National Institute for Space Research</name></author>
-        <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID  | replace('&', '&amp;') }}" rel="via" title="Original source metadata" type="text/xml"/>
-        <link href="http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID | replace('&', '&amp;')  }}" rel="alternate" title="Alternate metadata URL" type="text/xml"/>
-        <link href="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL | replace('&', '&amp;')  }}" rel="icon" title="Browse image URL" type="image/jpeg"/>
-        <link href="http://cbers2.dpi.inpe.br/xyz/{{ item.cartURL | replace('&', '&amp;')  }}" rel="enclosure" title="Product download URL" type="text/html"/>
+        <link href="http://www.dgi.inpe.br/cwic_cb4/sceneid.php?sceneid={{ item.sceneID  | replace('&', '&amp;') }}" rel="via" title="Original source metadata" type="text/xml"/>
+        <link href="http://www.dgi.inpe.br/cwic_cb4/sceneid.php?sceneid={{ item.sceneID | replace('&', '&amp;')  }}" rel="alternate" title="Alternate metadata URL" type="text/xml"/>
+        <link href="{{ item.browseURL | replace('&', '&amp;')  }}" rel="icon" title="Browse image URL" type="image/jpeg"/>
+        <link href="{{ item.cartURL | replace('&', '&amp;')  }}" rel="enclosure" title="Product download URL" type="text/html"/>
         <georss:polygon>
             {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude }} {{ item.upperRightCornerLatitude }} {{ item.upperRightCornerLongitude }} {{ item.lowerRightCornerLatitude }} {{ item.lowerRightCornerLongitude }} {{ item.lowerLeftCornerLatitude }} {{ item.lowerLeftCornerLongitude }} {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude}}
         </georss:polygon>
@@ -38,7 +38,7 @@
             <![CDATA[<div><a href="{{ url_root }}atom/scene?sceneid={{ item.sceneID }}" target="_blank"><img src="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}" width="250px" height="250px"/></a></div>]]>
         </content:encoded>
         <description>
-            <![CDATA[<div><img src="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}" width="250px" height="250px"/></div>]]>
+            <![CDATA[<div><img src="{{ item.browseURL }}" width="250px" height="250px"/></div>]]>
         </description>
     </entry>{% endfor %}{% endif %}
 </feed>

@@ -19,7 +19,7 @@
         "updated":"{{ item.dateUpdated }}",
         "date":"{{ item.acquisitionDate }}",
         "author":" INPE - National Institute for Space Research",
-        "browse_image_url":"http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}",
+        "browse_image_url":"http://www.dgi.inpe.br/cwic_cb4/{{ item.browseURL }}",
         "original_source_metadata":"http://cbers2.dpi.inpe.br/xyz/sceneid.php?sceneid={{ item.sceneID }}"
       }
     }{% if loop.index < count %},{% endif %}{%endfor%}{%endif%}
