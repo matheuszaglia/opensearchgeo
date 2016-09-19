@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, render_template, abort, jsonify
+from flask import Flask, request, make_response, render_template, abort, jsonify, redirect, url_for
 import inpe_data
 
 app = Flask(__name__)
@@ -66,16 +66,12 @@ def scene(format):
     return resp
 
 
+@app.route('/')
 @app.route('/osdd')
 def osdd():
     resp = make_response(render_template('osdd.xml', url=request.url_root))
     resp.content_type = 'application/xml'
     return resp
-
-
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 
 @app.errorhandler(500)
