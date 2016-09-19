@@ -24,7 +24,7 @@ def rest(format):
                                                  request.args.get('end', None),
                                                  start_index, count)
     except ValueError:
-        abort(400, 'Cordinates must be numbers')
+        abort(400, 'Invalid bounding box')
     except IOError:
         abort(503)
 

@@ -35,7 +35,7 @@
             {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude }} {{ item.upperRightCornerLatitude }} {{ item.upperRightCornerLongitude }} {{ item.lowerRightCornerLatitude }} {{ item.lowerRightCornerLongitude }} {{ item.lowerLeftCornerLatitude }} {{ item.lowerLeftCornerLongitude }} {{ item.upperLeftCornerLatitude }} {{ item.upperLeftCornerLongitude}}
         </georss:polygon>
         <content:encoded>
-            <![CDATA[<div><a href="{{ url_root }}atom/scene?sceneid={{ item.sceneID }}" target="_blank"><img src="http://cbers2.dpi.inpe.br/xyz/{{ item.browseURL }}" width="250px" height="250px"/></a></div>]]>
+            <![CDATA[<div><a href="{{ url_root }}opensearch/atom/scene?sceneid={{ item.sceneID }}" target="_blank"><img src="{{ item.browseURL }}" width="250px" height="250px"/></a></div>]]>
         </content:encoded>
         <description>
             <![CDATA[<div><img src="{{ item.browseURL }}" width="250px" height="250px"/></div>]]>
