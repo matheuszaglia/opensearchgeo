@@ -6,7 +6,7 @@ function to_console {
     echo -e "\n*** $1 ***\n"
 }
 
-sudo apt-get install  python3-pip python3-dev virtualenv
+sudo apt-get install  python3-pip python3-dev virtualenv libmysqlclient-dev
 
 to_console "creating virtual env on venv folder"
 virtualenv -p python3 venv
