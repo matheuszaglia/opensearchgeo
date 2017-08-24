@@ -6,6 +6,7 @@
       xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/"
       xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/" xml:lang="en">
     <title>OS Scene</title>
+    <ShortName>INPE OpenSearch</ShortName>
     <id>
         {{ url }}
     </id>
@@ -16,8 +17,9 @@
     </author>
     <os:totalResults>{{ total_results }}</os:totalResults>
     <os:startIndex>{{ start_index }}</os:startIndex>
-    <os:itemsPerPage>{{ count }}</os:itemsPerPage>{% if total_results > 0 %}{% for item in data %}
-    <entry>
+    <os:itemsPerPage>{{ count }}</os:itemsPerPage>
+    <os:Query role="request" startIndex="{{ start_index }}" totalResults="{{ total_results }}"></os:Query>
+    {% if total_results > 0 %}{% for item in data %}<entry>
         <title>
             Entity ID: {{ item.SceneId }}, Satellite: {{ item.Satellite }}, Sensor: {{ item.Sensor }}, Acquisition Date: {{ item.Date }}
         </title>
@@ -25,7 +27,7 @@
             {{ url_root }}atom/scene?sceneid={{ item.SceneId }}
         </id>
         <dc:date>{{ item.Date }}</dc:date>
-        <updated>{{ item.IngestDate }}</updated>
+        <updated>{{ item.IngestDate }}Z</updated>
         <author><name>INPE - National Institute for Space Research</name></author>
         <link href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}" rel="via" title="Original source metadata" type="text/xml"/>
         <link href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}" rel="alternate" title="Alternate metadata URL" type="text/xml"/>
