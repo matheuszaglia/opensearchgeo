@@ -1,22 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
-    xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
-    xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
-    xmlns:parameters="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
-
-    <ShortName>INPE Granule Search</ShortName>
-
-    <Description>
-        INPE - National Institute for Space Research granule search using
-        OpenSearch Geo and Time extensions
-    </Description>
-
-    <Tags>INPE, GRANULE, EO, SATELLITE, SENSOR, METADATA</Tags>
-
+<OpenSearchDescription xml:lang="en"
+xmlns="http://a9.com/-/spec/opensearch/1.1/"
+xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
+xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/">
+    <ShortName>INPE_OS</ShortName>
+    <Description>INPE - National Institute for Space Research collections search using
+        OpenSearch Geo and Time extensions</Description>
+    <Tags>INPE collections</Tags>
     <Contact>mzaglia@dpi.inpe.br</Contact>
-
-    <Url type="application/atom+xml" template="{{ url }}opensearch/atom/{{ collection }}/granule?bbox={geo:box}&amp;count={count?}&amp;startIndex={startIndex?}&amp;astart={time:start?}&amp;end={time:end?}"/>
-    <Url type="application/json" template="{{ url }}opensearch/json/{{ collection }}/granule?bbox={geo:box}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}"/>
-    <Query role="example" geo:box="-70,-50,-20,0" time:start="2014-01-01"
-           time:end="2016-06-06" count="10" startIndex="1" title="INPE Granule Search"/>
+    <Url type="application/atom+xml" template="{{ url }}opensearch/collections.atom?searchTerms={searchTerms?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}"/>
+    <Query role="example" searchTerms="CB4" count="10" startIndex="1" title="INPE Collections sample search"/>
 </OpenSearchDescription>

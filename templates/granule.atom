@@ -1,0 +1,25 @@
+{%  extends "base.atom" %}
+{% block osdd %}
+    <link href="{{ url_root }}opensearch/" rel="search" title="OS Scene" type="application/opensearchdescription+xml"/>
+{% endblock %}
+{% block content %}
+    <os:Query role="request" totalResults="{{ total_results }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
+{% if total_results > 0 %}{% for item in data %}
+    <entry>
+        <title>
+            Entity ID: {{ item.SceneId }}, Satellite: {{ item.Satellite }}, Sensor: {{ item.Sensor }}, Acquisition Date: {{ item.Date }}
+        </title>
+        <id>
+            {{ url_root }}opensearch/granule.atom?uid={{ item.SceneId }}
+        </id>
+        <updated>{{ item.IngestDate }}</updated>
+        <link href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}" rel="via" title="Original source metadata" type="text/xml"/>
+        <link href="{{ url_root + item.browseURL }}" rel="icon" title="Browse image URL" type="image/jpeg"/>
+        <link href="{{ item.cartURL }}" rel="enclosure" title="Product download URL" type="text/html"/>
+        <georss:polygon>
+            {{ item.TL_Latitude }} {{ item.TL_Longitude }} {{ item.TR_Latitude }} {{ item.TR_Longitude }} {{ item.BR_Latitude }} {{ item.BR_Longitude }} {{ item.BL_Latitude }} {{ item.BL_Longitude }} {{ item.TL_Latitude }} {{ item.TL_Longitude}}
+        </georss:polygon>
+        <dc:identifier>{{ item.sceneId }}</dc:identifier>
+    </entry>
+{% endfor %}{% endif %}
+{% endblock %}

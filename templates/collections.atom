@@ -1,0 +1,14 @@
+{%  extends "base.atom" %}
+{% block osdd %}
+    <link href="{{ url_root }}opensearch/osdd/collections" rel="search" title="OS Collections" type="application/opensearchdescription+xml"/>
+{% endblock %}
+{% block content %}
+{% if total_results > 0 %}{% for item in data %}
+    <entry>
+        <id>{{ url_root }}opensearch/atom/collections?uid={{ item.Satellite }}{{ item.Sensor }}</id>
+        <title>Satellite: {{ item.Satellite }}, Sensor: {{ item.Sensor }}</title>
+        <updated>{{ item.Date }}</updated>
+        <link rel="search" type="application/opensearchdescription+xml" href="{{ url_root }}opensearch/osdd/granule/{{ item.Satellite }}{{ item.Sensor }}"/>
+    </entry>
+{% endfor %}{% endif %}
+{% endblock %}
