@@ -48,8 +48,11 @@ def os_dataset(format):
     count = int(request.args.get('count', 10))
 
     try:
-        result = inpe_data.get_datasets(request.args.get('keyword', None),
+        result = inpe_data.get_datasets(request.args.get('bbox', None),
+                                        request.args.get('keyword', None),
                                         request.args.get('uid', None),
+                                        request.args.get('start', None),
+                                        request.args.get('end', None),
                                         start_index, count)
         total_results = len(result)
         data = result

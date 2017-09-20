@@ -57,19 +57,6 @@ def get_bbox(bbox, uid, dataset_id, time_start, time_end, start, count):
 
     return prepare_dict(result, start, count), result_len[0][0]
 
-
-def get_scene(sceneid):
-    sql = "SELECT  *, DATE_FORMAT(`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
-          "DATE_FORMAT(`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
-          "FROM Scene" \
-          "WHERE `SceneId`='{}'".format(sceneid)
-
-    result = database('login', 'password', 'host', 'database').do_query(sql)
-    data = dict(result[0].items())
-    data['browseURL'] = "opensearch/browseimage/{}".format(result[0]['SceneId'])
-    return data
-
-
 def get_updated():
     sql = "SELECT DATE_FORMAT(`update_time`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date` " \
           "FROM information_schema.tables WHERE table_name = 'Scene';"
@@ -90,17 +77,41 @@ def prepare_dict(data, start, count):
     return res
 
 
-def get_datasets(query, uid, start_index, count):
-    where = ""
+def get_datasets(bbox, query, uid, time_start, time_end, start_index, count):
+    where = []
 
     if uid is not None:
-        where = " WHERE CONCAT(`Satellite`, `Sensor`) = '{}'".format(uid)
+        where.append("CONCAT(`Satellite`, `Sensor`) = '{}'".format(uid))
     elif query is not None:
-        where = " WHERE CONCAT(`Satellite`, `Sensor`) LIKE '%%{}%%'".format(query)
+        where.append("CONCAT(`Satellite`, `Sensor`) LIKE '%%{}%%'".format(query))
+
+    if bbox is not None:
+        try:
+            min_x, min_y, max_x, max_y = bbox.split(',')
+            for x in bbox.split(','):
+                float(x)
+
+            where.append("{}<= `TL_Latitude` and {} <=`TL_Longitude` and {} >=`TR_Latitude` and" \
+                   " {} <= `TR_Longitude` and {} >=`BR_Latitude` and {} >= `BR_Longitude` and" \
+                   " {} <= `BL_Latitude` and {} >=`BL_Longitude`".format(min_y, min_x, max_y, min_x,
+                                                                         max_y, max_x, min_y, max_x))
+        except:
+            raise (InvalidBoundingBoxError())
+
+    if time_start is not None:
+        where.append("`Date` >= '{}'".format(time_start))
+
+    if time_end is not None:
+        where.append("`Date`<= '{}'".format(time_end))
+
+    else:
+        where.append("`Date` <= curdate()")
+
+    where = " and ".join(where)
 
     sql = "SELECT `Satellite`, `Sensor`, " \
           "MAX(DATE_FORMAT(`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s')) as `Date` " \
-          "FROM `Scene`{} " \
+          "FROM `Scene` WHERE {} " \
           "GROUP BY `Satellite`, `Sensor` " \
           "ORDER BY `Date`".format(where)
 

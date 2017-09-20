@@ -7,6 +7,6 @@ xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/">
         OpenSearch Geo and Time extensions</Description>
     <Tags>INPE collections</Tags>
     <Contact>mzaglia@dpi.inpe.br</Contact>
-    <Url type="application/atom+xml" template="{{ url }}opensearch/collections.atom?searchTerms={searchTerms?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}"/>
+    <Url type="application/atom+xml" template="{{ url }}opensearch/collections.atom?searchTerms={searchTerms?}&amp;bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}"/>
     <Query role="example" searchTerms="CB4" count="10" startIndex="1" title="INPE Collections sample search"/>
 </OpenSearchDescription>
