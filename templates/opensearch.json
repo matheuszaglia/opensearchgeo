@@ -1,7 +1,6 @@
 {
   "type":"FeatureCollection",
-  "features":[{% if total_results > 0 %}{% for item in data %}
-    {
+  "features":[{% if total_results > 0 %}{% for item in data %}{
       "type":"Feature",
       "geometry":{
         "type":"Polygon",

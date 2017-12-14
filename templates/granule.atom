@@ -1,25 +1,46 @@
-{%  extends "base.atom" %}
-{% block osdd %}
+{%  extends "base.atom" %}{% block osdd %}
     <link href="{{ url_root }}opensearch/" rel="search" title="OS Scene" type="application/opensearchdescription+xml"/>
-{% endblock %}
-{% block content %}
+        {% endblock %}
+        {% block content %}
+{% if bbox is not none %}
+    <georss:box>{{ bbox }}</georss:box>
+{% endif %}
     <os:Query role="request" totalResults="{{ total_results }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
-{% if total_results > 0 %}{% for item in data %}
-    <entry>
+{% if total_results > 0 %}{% for item in data %}    <entry>
         <title>
-            Entity ID: {{ item.SceneId }}, Satellite: {{ item.Satellite }}, Sensor: {{ item.Sensor }}, Acquisition Date: {{ item.Date }}
+            {{ item.SceneId }}
         </title>
-        <id>
-            {{ url_root }}opensearch/granule.atom?uid={{ item.SceneId }}
-        </id>
+        <id>{{ url_root }}opensearch/granule.atom?uid={{ item.SceneId }}</id>
         <updated>{{ item.IngestDate }}</updated>
-        <link href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}" rel="via" title="Original source metadata" type="text/xml"/>
-        <link href="{{ url_root + item.browseURL }}" rel="icon" title="Browse image URL" type="image/jpeg"/>
-        <link href="{{ item.cartURL }}" rel="enclosure" title="Product download URL" type="text/html"/>
+        <link rel="alternate" type="application/atom+xml" title="ATOM entry link" href="{{ url_root }}opensearch/granule.atom?uid={{ item.SceneId }}"/>
+        <link rel="via" href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}"  title="Original source metadata" type="text/xml"/>
+        <link rel="icon" href="{{ url_root + item.icon }}"  title="Browse image URL" type="image/jpeg"/>
+        <link rel="enclosure" href="{{ item.enclosure }}"  title="Product download URL" type="text/html"/>
         <georss:polygon>
             {{ item.TL_Latitude }} {{ item.TL_Longitude }} {{ item.TR_Latitude }} {{ item.TR_Longitude }} {{ item.BR_Latitude }} {{ item.BR_Longitude }} {{ item.BL_Latitude }} {{ item.BL_Longitude }} {{ item.TL_Latitude }} {{ item.TL_Longitude}}
         </georss:polygon>
-        <dc:identifier>{{ item.sceneId }}</dc:identifier>
+        <content type="html">
+            <![CDATA[
+            <a href="{{ url_root + item.icon }}">
+                <img height="200" src="{{ url_root + item.icon }}" align="right"/>
+	        </a>
+	        <ul>
+	          <li><b>Satellite :</b> {{ item.Satellite }}</li>
+	          <li><b>Sensor :</b> {{ item.Sensor }}</li>
+	          <li><b>Acquisition Date :</b> {{ item.Date }}</li>
+	          <li><b>Path :</b> {{ item.Path }}</li>
+	          <li><b>Row :</b> {{ item.Row }}</li>
+	          <li><b>Orbit :</b> {{ item.Orbit }}</li>
+	          <li><b>ImageOrientation :</b> {{ item.ImageOrientation }}</li>
+	          <li><b>Cloud Cover Q1 :</b> {{ item.CloudCoverQ1 }}</li>
+	          <li><b>Cloud Cover Q2 :</b> {{ item.CloudCoverQ2 }}</li>
+	          <li><b>Cloud Cover Q3 :</b> {{ item.CloudCoverQ3 }}</li>
+	          <li><b>Cloud Cover Q4 :</b> {{ item.CloudCoverQ4 }}</li>
+            </ul>
+            <a href="{{ url_root + "opensearch/metadata/" + item.SceneId  }}"> Metadata </a>
+            ]]>
+        </content>
     </entry>
-{% endfor %}{% endif %}
+{% endfor %}
+{% endif %}
 {% endblock %}

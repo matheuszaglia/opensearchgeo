@@ -12,7 +12,7 @@
     <id>
         {{ url }}
     </id>
-    <updated>{{ updated }}</updated>
+    {% block updated %}{% endblock %}
     {% block osdd %}{% endblock %}
     <os:totalResults>{{ total_results }}</os:totalResults>
     <os:startIndex>{{ start_index }}</os:startIndex>
