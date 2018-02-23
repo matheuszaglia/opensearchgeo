@@ -1,12 +1,17 @@
-{%-  extends "base.atom" %}
-{%- block updated%}
+
+{% extends "base.atom" %}
+{% block updated%}
     <updated> {{ updated }}</updated>
 {% endblock %}
-{%- block osdd %}
+{% block osdd %}
     <link href="{{ url_root }}opensearch/osdd/collections" rel="search" title="OS Collections" type="application/opensearchdescription+xml"/>
 {% endblock %}
 {% block content %}
     <os:Query role="request" totalResults="{{ total_results }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
+{% if request.args.get('bbox') is not none %}
+    {% set minx, miny, maxx, maxy = request.args.get('bbox').split(',') %}
+    <georss:polygon>{{ miny }} {{ minx }} {{ miny }} {{ maxx }} {{ maxy }} {{ maxx }} {{ maxy }} {{ minx }} {{ miny }} {{ minx }}</georss:polygon>
+{% endif %}
 {% if total_results > 0 %}
 {% for item in data %}
     <entry>

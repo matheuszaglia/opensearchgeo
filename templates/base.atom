@@ -15,7 +15,7 @@
     {% block updated %}{% endblock %}
     {% block osdd %}{% endblock %}
     <os:totalResults>{{ total_results }}</os:totalResults>
-    <os:startIndex>{{ start_index }}</os:startIndex>
+    <os:startIndex>{{ start_index + 1 }}</os:startIndex>
     <os:itemsPerPage>{{ count }}</os:itemsPerPage>
     {% block content %}{% endblock %}
 </feed>

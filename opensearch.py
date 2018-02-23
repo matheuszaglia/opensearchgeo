@@ -1,9 +1,9 @@
 from flask import Flask, request, make_response, render_template, abort, jsonify, send_file
 import inpe_data
-
+import os
 import io
 import logging
-import traceback
+
 
 app = Flask(__name__)
 app.config['PROPAGATE_EXCEPTIONS'] = True
@@ -14,71 +14,82 @@ handler.setFormatter(logging.Formatter(
 ))
 
 app.logger.addHandler(handler)
-
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 app.jinja_env.keep_trailing_newline = True
 
 
-@app.route('/granule.<string:format>', methods=['GET'])
-def os_granule(format):
+@app.route('/granule.<string:output>', methods=['GET'])
+def os_granule(output):
     data = []
     total_results = 0
-    start_index = request.args.get('startIndex', 0)
+
+    start_index = request.args.get('startIndex', 1)
     count = request.args.get('count', 10)
 
-    if start_index == "" or int(start_index) < 1:
+    if start_index == "":
         start_index = 0
+    elif int(start_index) == 0:
+        abort(400, 'Invalid startIndex')
     else:
         start_index = int(start_index) - 1
-
     if count == "":
         count = 10
+    elif int(count) < 0:
+        abort(400, 'Invalid count')
     else:
         count = int(count)
 
     try:
-
         data, total_results = inpe_data.get_bbox(request.args.get('bbox', None),
                                                  request.args.get('uid', None),
-                                                 request.args.get('collectionId'),
                                                  request.args.get('start', None),
                                                  request.args.get('end', None),
+                                                 request.args.get('radiometricProcessing', None),
+                                                 request.args.get('type', None),
+                                                 request.args.get('band', None),
                                                  start_index, count)
     except inpe_data.InvalidBoundingBoxError:
         abort(400, 'Invalid bounding box')
     except IOError:
         abort(503)
-    except inpe_data.CollectionError as e:
-        abort(400, str(e))
 
-    resp = make_response(render_template('granule.' + format,
+
+    if output == 'json':
+        return jsonify(data)
+
+    resp = make_response(render_template('granule.{}'.format(output),
                                          url=request.url.replace('&', '&amp;'),
-                                         bbox=request.args.get('bbox', None),
                                          data=data, total_results=total_results,
                                          start_index=start_index, count=count,
-                                         url_root=request.url_root))
+                                         url_root=os.environ.get('BASE_URL')))
 
-    if format == 'atom':
-        format = 'atom+xml'
-    resp.content_type = 'application/' + format
+    if output == 'atom':
+        resp.content_type = 'application/atom+xml' + output
 
     return resp
 
+@app.route('/collections.<string:output>')
+def os_dataset(output):
+    abort(503) # disabled at the moment
 
-@app.route('/collections.<string:format>')
-def os_dataset(format):
     total_results = 0
     data = None
-    start_index = request.args.get('startIndex', 0)
+    start_index = request.args.get('startIndex', 1)
     count = request.args.get('count', 10)
 
-    if start_index == "" or int(start_index) < 1:
+    if start_index == "":
         start_index = 0
+    elif int(start_index) == 0:
+        abort(400, 'Invalid startIndex')
+
     else:
         start_index = int(start_index) - 1
+
     if count == "":
         count = 10
+    elif int(count) < 0:
+        abort(400, 'Invalid count')
     else:
         count = int(count)
 
@@ -94,16 +105,16 @@ def os_dataset(format):
     except IOError:
         abort(503)
 
-    resp = make_response(render_template('collections.' + format,
+    resp = make_response(render_template('collections.' + output,
                                          url=request.url.replace('&', '&amp;'),
                                          data=data, total_results=len(result),
                                          start_index=start_index, count=count,
                                          url_root=request.url_root,
                                          updated=inpe_data.get_updated()
                                          ))
-    if format == 'atom':
-        format = 'atom+xml'
-    resp.content_type = 'application/' + format
+    if output == 'atom':
+        output = 'atom+xml'
+    resp.content_type = 'application/' + output
     return resp
 
 
@@ -121,6 +132,7 @@ def os_osdd_granule(collection):
 @app.route('/osdd')
 @app.route('/osdd/collection')
 def os_osdd_collection():
+    abort(503)  # disabled at the moment
     resp = make_response(render_template('osdd_collection.xml', url=request.url_root))
     resp.content_type = 'application/xml'
     return resp
@@ -148,38 +160,6 @@ def scene(sceneid):
 
     return jsonify(data)
 
-
-@app.route('/path_row')
-def get_path_row():
-    data = inpe_data.get_path_row()
-    resp = make_response(render_template('path_row.json',
-                                         total_results=len(data),
-                                         data=data
-                                         ))
-
-    resp.content_type = 'application/json'
-    return resp
-
-
-@app.errorhandler(500)
-def handle_api_error(e):
-    response = jsonify({'code': 500, 'message': 'Internal Server Error'})
-    response.status_code = 500
-    return response
-
-@app.errorhandler(502)
-def handle_bad_gateway_error(e):
-    response = jsonify({'code': 502, 'message': 'Bad Gateway'})
-    response.status_code = 502
-    return response
-
-@app.errorhandler(503)
-def handle_service_unavailable_error(e):
-    response = jsonify({'code': 503, 'message': 'Service Unavailable'})
-    response.status_code = 503
-    return response
-
-
 @app.errorhandler(400)
 def handle_bad_request(e):
     response = jsonify({'code': 400, 'message': 'Bad Request - {}'.format(e.description)})
@@ -194,9 +174,30 @@ def handle_page_not_found(e):
     return response
 
 
+@app.errorhandler(500)
+def handle_api_error(e):
+    response = jsonify({'code': 500, 'message': 'Internal Server Error'})
+    response.status_code = 500
+    return response
+
+
+@app.errorhandler(502)
+def handle_bad_gateway_error(e):
+    response = jsonify({'code': 502, 'message': 'Bad Gateway'})
+    response.status_code = 502
+    return response
+
+
+@app.errorhandler(503)
+def handle_service_unavailable_error(e):
+    response = jsonify({'code': 503, 'message': 'Service Unavailable'})
+    response.status_code = 503
+    return response
+
+
 @app.errorhandler(Exception)
 def handle_exception(e):
-    app.logger.error(traceback.format_exc(-1))
+    app.logger.exception(e)
     response = jsonify({'code': 500, 'message': 'Internal Server Error'})
     response.status_code = 500
     return response

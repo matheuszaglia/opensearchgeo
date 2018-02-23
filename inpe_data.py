@@ -1,5 +1,4 @@
-from db_connection import database
-import json
+import sqlalchemy
 import logging
 import os
 
@@ -8,26 +7,32 @@ handler.setFormatter(logging.Formatter(
     '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
 ))
 
-logger = logging.getLogger("opensearch")
+
+logger = logging.getLogger('opensearch')
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-def get_bbox(bbox=None, uid=None, dataset_id=None, time_start=None, time_end=None, start=0, count=10):
-    sql = "SELECT *, DATE_FORMAT(`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
-          "DATE_FORMAT(`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
-          "FROM Scene WHERE "
 
-    where = []
+def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
+             radiometric=None, image_type=None, band=None, start=0, count=10):
+    sql = "SELECT DISTINCT s.*, DATE_FORMAT(s.`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
+          "DATE_FORMAT(s.`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
+          "FROM Scene AS s, Product AS p WHERE "
+
+    where = list()
+
+    where.append('s.`SceneId` = p.`SceneId`')
 
     if uid is not None and uid != "":
-        where.append("`SceneId` = '{}'".format(uid))
+        where.append("s.`SceneId` = '{}'".format(uid))
 
     if bbox is not None and bbox != "":
         try:
             for x in bbox.split(','):
                 float(x)
             min_x, min_y, max_x, max_y = bbox.split(',')
-            bbox = []
+
+            bbox = list()
 
             bbox.append("({} >= `TL_Longitude` and {} <=`TL_Latitude`)".format(max_x, min_y))
 
@@ -42,17 +47,22 @@ def get_bbox(bbox=None, uid=None, dataset_id=None, time_start=None, time_end=Non
         except:
             raise (InvalidBoundingBoxError())
 
-    if dataset_id is not None and dataset_id != "":
-        where.append("CONCAT(`Satellite`, `Sensor`) = '{}'".format(dataset_id))
-
     if time_start is not None and time_start != "":
-        where.append("`Date` >= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_start))
+
+        where.append("s.`Date` >= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_start))
 
     if time_end is not None and time_end != "":
-        where.append("`Date`<= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_end))
+        where.append("s.`Date`<= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_end))
 
     else:
-        where.append("`Date` <= curdate()")
+        where.append("s.`Date` <= curdate()")
+
+    if radiometric is not None and radiometric != "":
+        where.append("p.`RadiometricProcessing` LIKE '%%{}%%'".format(radiometric))
+    if image_type is not None and image_type != "":
+        where.append("p.`Type` LIKE '%%{}%%'".format(image_type))
+    if band is not None and band != "":
+        where.append("p.`Band` LIKE '%%{}%%'".format(band))
 
     where = " and ".join(where)
 
@@ -62,145 +72,96 @@ def get_bbox(bbox=None, uid=None, dataset_id=None, time_start=None, time_end=Non
 
     sql += " LIMIT {},{}".format(start, count)
 
-    result = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)
+    result = do_query(sql)
 
-    sql = "SELECT COUNT(`SceneId`) " \
-          "FROM Scene " \
-          "WHERE {} ".format(where)
+    sql = "SELECT COUNT(s.`SceneId`) " \
+          "FROM Scene AS s, Product AS p " \
+          "WHERE {} GROUP BY s.`SceneId`".format(where)
 
-    result_len = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)
-    if result_len[0][0] < count:
-        count = result_len[0][0]
+    result_len = do_query(sql)
 
-    return prepare_dict(result), result_len[0][0]
+    if len(result_len) > 0:
+        if result_len[0][0] < count:
+            count = result_len[0][0]
+    else:
+        count = 0
+
+    return make_geojson(result), count
 
 
 def get_updated():
     sql = "SELECT DATE_FORMAT(`update_time`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date` " \
-          "FROM information_schema.tables WHERE table_name = 'Scene';"
+          "FROM information_schema.tables WHERE table_name = 'Scene'"
 
-    result = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)
+    result = do_query(sql)
 
     return result[0][0]
 
 
-def prepare_dict(data):
-    res = []
-    for i in data:
-        res.append(dict(i.items()))
-        res[-1]['icon'] = "opensearch/browseimage/{}".format(i['SceneId'])
-        res[-1]['enclosure'] = get_enclosure(res[-1])
-    return res
-
-
-def get_datasets(bbox, query, uid, time_start, time_end, start = 0, count = 10):
-    where = []
-
-    if uid is not None and uid != "":
-        where.append("CONCAT(`Satellite`, `Sensor`) = '{}'".format(uid))
-    elif query is not None and query != "":
-        where.append("CONCAT(`Satellite`, `Sensor`) LIKE '%%{}%%'".format(query))
-
-    if bbox is not None and bbox != "":
-        try:
-            for x in bbox.split(','):
-                float(x)
-            min_x, min_y, max_x, max_y = bbox.split(',')
-            bbox = []
-
-            bbox.append("({} >= `TL_Longitude` and {} <=`TL_Latitude`)".format(max_x, min_y))
-
-            bbox.append("({} <= `TR_Longitude` and {} <=`TR_Latitude`)".format(min_x, min_y))
-
-            bbox.append("({} >= `BL_Longitude` and {} >=`BL_Latitude`)".format(max_x, max_y))
-
-            bbox.append("({} <= `BR_Longitude` and {} >=`BR_Latitude`)".format(min_x, max_y))
-
-            where.append("(" + (" and ".join(bbox)) + ")")
-
-        except:
-            raise (InvalidBoundingBoxError())
-
-    if time_start is not None and time_start != "":
-        where.append("`Date` >= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_start))
-
-    if time_end is not None and time_end != "":
-        where.append("`Date`<= STR_TO_DATE('{}','%%Y-%%m-%%dT%%H:%%i:%%s')".format(time_end))
-
-    else:
-        where.append("`Date` <= curdate()")
-
-    where = " and ".join(where)
-
-    sql = "SELECT `Satellite`, `Sensor`, " \
-          "MAX(DATE_FORMAT(`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s')) as `Date` " \
-          "FROM `Scene` WHERE {} " \
-          "GROUP BY `Satellite`, `Sensor` " \
-          "ORDER BY `Date` DESC".format(where)
-    sql += " LIMIT {},{}".format(start, count)
-
-    result = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)
-
+def get_products(scene_id):
+    sql = "SELECT * FROM `Product` WHERE `SceneId` = '{}'".format(scene_id)
+    result = do_query(sql)
     return result
 
 
-def get_enclosure(scene):
-    from httplib2 import Http
-    from datetime import datetime
+def make_geojson(data, output='json'):
+    geojson = dict()
+    geojson['type'] = 'FeatureCollection'
+    geojson['features'] = []
+    base_url = os.environ.get('BASE_URL')
+    for i in data:
+        i = dict(i.items())  # i is not a dictionary at this point
 
-    url = 'http://www.dpi.inpe.br/newcatalog/tmp/{}/{}_{:02d}/{}/{}_{}_0/{}_BC_UTM_WGS84'
-    satellite = ""
-    table = ""
-    drd = ""
-    path = scene['Path']
-    row = scene['Row']
 
-    if scene['Satellite'] == 'CB4':
-        satellite = 'CBERS4'
-        table = 'Cbers'
-    elif scene['Satellite'] == 'CB2':
-        satellite = 'CBERS2'
-        table = 'Cbers'
-    elif scene['Satellite'] == 'CB2B':
-        satellite = 'CBERS2B'
-        table = 'Cbers'
-    elif scene['Satellite'] == 'L7':
-        satellite = 'LANDSAT7'
-        table = 'Landsat'
-    elif scene['Satellite'] == 'L5':
-        satellite = 'LANDSAT5'
-        table = 'Landsat'
-    else:
-        return None
+        feature = dict()
+        feature['type'] = 'Feature'
 
-    dt = datetime.strptime(scene['Date'], '%Y-%m-%dT%H:%M:%S')
+        geometry = dict()
+        geometry['type'] = 'Polygon'
+        geometry['coordinates'] = [
+          [[i['TL_Longitude'], i['TL_Latitude']],
+           [i['BL_Longitude'], i['BL_Latitude']],
+           [i['BR_Longitude'], i['BR_Latitude']],
+           [i['TR_Longitude'], i['TR_Latitude']],
+           [i['TL_Longitude'], i['TL_Latitude']]]
+        ]
 
-    sql = "SELECT `DRD` " \
-          "FROM `{}Scene`" \
-          " WHERE `SceneId` = '{}' ".format(table, scene['SceneId'])
+        feature['geometry'] = geometry
+        properties = dict()
+        properties['title'] = i['SceneId']
+        properties['id'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
+        properties['updated'] = i['IngestDate']
+        properties['alternate'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
+        properties['icon'] = '{}/browseimage/{}'.format(base_url, i['SceneId'])
+        properties['via'] = '{}/metadata/{}'.format(base_url, i['SceneId'])
 
-    drd = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)[0][0]
-    url_2 = url.format(satellite, dt.year, dt.month, drd, path, row, '2')
-    url_4 = url.format(satellite, dt.year, dt.month, drd, path, row, '4')
-    h = Http()
-    resp = h.request(url_2, 'HEAD')
+        for key, value in i.items():
+            if key != 'SceneId' and key != 'IngestDate':
+                properties[key] = value
 
-    if resp[0]['status'] == '200':
-        return url_2
-    else:
-        resp = h.request(url_4, 'HEAD')
-        if resp[0]['status'] == '200':
-            return url_4
+        products = get_products(i['SceneId'])
 
-    return 'http://www.dgi.inpe.br/catalogo/cart-cwic.php?SCENEID=' + scene['SceneId']
+        properties['enclosure'] = []
+        for p in products:
+            p = dict(p.items())
+
+            enclosure = dict()
+
+            enclosure['band'] = p['Band']
+            enclosure['radiometric_processing'] = p['RadiometricProcessing']
+            enclosure['type'] = p['Type']
+            enclosure['url'] = os.environ.get('ENCLOSURE_BASE') + p['Filename']
+            properties['enclosure'].append(enclosure)
+
+        feature['properties'] = properties
+        geojson['features'].append(feature)
+
+    return geojson
 
 
 def get_browse_image(sceneid):
+    table = ''
+
     if sceneid.startswith('L'):
         table = 'LandsatBrowse'
     elif sceneid.startswith('CB'):
@@ -210,17 +171,23 @@ def get_browse_image(sceneid):
     elif sceneid.startswith('P6'):
         table = 'P6Browse'
     sql = "SELECT `Browse` FROM {} WHERE `SceneId` = '{}'".format(table, sceneid)
-    try:
-        result = database(os.environ.get('DB_USER'), os.environ.get('DB_PASS'), os.environ.get('DB_HOST'),
-                      os.environ.get('DB_NAME')).do_query(sql)
-    except:
-        raise Exception('Could not retrieve data from the database.')
+
+    result = do_query(sql)
 
     return result[0][0]
 
 
-class CollectionError(Exception):
-    pass
+def do_query(sql):
+    connection = 'mysql://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
+
+                                              os.environ.get('DB_PASS'),
+                                              os.environ.get('DB_HOST'),
+                                              os.environ.get('DB_NAME'))
+    engine = sqlalchemy.create_engine(connection)
+    result = engine.execute(sql)
+    result = result.fetchall()
+    engine.dispose()
+    return result
 
 
 class InvalidBoundingBoxError(Exception):
