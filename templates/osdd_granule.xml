@@ -2,16 +2,21 @@
 xmlns="http://a9.com/-/spec/opensearch/1.1/"
 xmlns:geo="http://a9.com/-/opensearch/extensions/geo/1.0/"
 xmlns:time="http://a9.com/-/opensearch/extensions/time/1.0/"
-xmlns:parameters="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
+xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
     <ShortName>INPE_OS</ShortName>
     <Description>INPE - National Institute for Space Research granule search using
         OpenSearch Geo and Time extensions</Description>
     <Tags>INPE granule</Tags>
     <Contact>mzaglia@dpi.inpe.br</Contact>
-    <Url rel="result" type="application/atom+xml" template="{{ url }}opensearch/granule.atom?bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}&amp;band={band?}&amp;radiometricProcessing={radiometricProcessing?}&amp;type={type?}">
-        <parameters:Parameter name="band" value="{band}" title="Identifies the product wave length"/>
-        <parameters:Parameter name="radiometricProcessing" value="{radiometricProcessing}" title="Type of radiometric processing used to generate the pixel value"/>
-        <parameters:Parameter name="type" value="{type}" title="Identifies the product type"/>
+    <Url rel="result" type="application/atom+xml" template="{{ url }}/granule.atom?bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}&amp;band={band?}&amp;radiometricProcessing={radiometricProcessing?}&amp;type={type?}&amp;dataset={dataset?}">
+        <params:Parameter name="band" value="{band}" title="Identifies the product wave length"/>
+        <params:Parameter name="radiometricProcessing" value="{radiometricProcessing}" title="Type of radiometric processing used to generate the pixel value"/>
+        <params:Parameter name="type" value="{type}" title="Identifies the product type"/>
+        <params:Parameter name="dataset" value="{dataset}" title="Identifies the dataset of a product">
+            {% for option in datasets %}
+            <Option value="{{ option.Dataset }}"/>
+            {% endfor %}
+        </params:Parameter>
     </Url>
     <Query role="example" geo:box="-70,-50,-20,0" time:start="2014-01-01"
            time:end="2016-06-06" count="10" startIndex="1" title="INPE Granule Search"/>

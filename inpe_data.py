@@ -14,8 +14,8 @@ logger.setLevel(logging.DEBUG)
 
 
 def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
-             radiometric=None, image_type=None, band=None, start=0, count=10):
-    sql = "SELECT DISTINCT s.*, DATE_FORMAT(s.`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
+             radiometric=None, image_type=None, band=None, dataset=None, start=0, count=10):
+    sql = "SELECT s.*, DATE_FORMAT(s.`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
           "DATE_FORMAT(s.`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
           "FROM Scene AS s, Product AS p WHERE "
 
@@ -63,26 +63,29 @@ def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
         where.append("p.`Type` LIKE '%%{}%%'".format(image_type))
     if band is not None and band != "":
         where.append("p.`Band` LIKE '%%{}%%'".format(band))
+    if dataset is not None and dataset != "":
+        where.append("p.`Dataset` LIKE '{}'".format(dataset))
 
     where = " and ".join(where)
 
     sql += where
 
-    sql += " ORDER BY `Date` DESC"
+    sql += " GROUP BY s.`SceneId` ORDER BY `Date` DESC"
 
     sql += " LIMIT {},{}".format(start, count)
 
     result = do_query(sql)
 
-    sql = "SELECT COUNT(s.`SceneId`) " \
+    sql = "SELECT COUNT(*) as len FROM (" \
+          "SELECT s.`SceneId`" \
           "FROM Scene AS s, Product AS p " \
-          "WHERE {} GROUP BY s.`SceneId`".format(where)
+          "WHERE {} GROUP BY s.`SceneId`) as s".format(where)
 
     result_len = do_query(sql)
-
-    if len(result_len) > 0:
-        if result_len[0][0] < count:
-            count = result_len[0][0]
+    result_len = int(result_len[0]['len'])
+    if result_len > 0:
+        if result_len < count:
+            count = result_len
     else:
         count = 0
 
@@ -94,12 +97,17 @@ def get_updated():
           "FROM information_schema.tables WHERE table_name = 'Scene'"
 
     result = do_query(sql)
-
-    return result[0][0]
+    return result[0]['Date']
 
 
 def get_products(scene_id):
     sql = "SELECT * FROM `Product` WHERE `SceneId` = '{}'".format(scene_id)
+    result = do_query(sql)
+    return result
+
+
+def get_datasets():
+    sql = "SELECT DISTINCT `Dataset` FROM `Product`"
     result = do_query(sql)
     return result
 
@@ -110,9 +118,6 @@ def make_geojson(data, output='json'):
     geojson['features'] = []
     base_url = os.environ.get('BASE_URL')
     for i in data:
-        i = dict(i.items())  # i is not a dictionary at this point
-
-
         feature = dict()
         feature['type'] = 'Feature'
 
@@ -143,8 +148,6 @@ def make_geojson(data, output='json'):
 
         properties['enclosure'] = []
         for p in products:
-            p = dict(p.items())
-
             enclosure = dict()
 
             enclosure['band'] = p['Band']
@@ -174,7 +177,7 @@ def get_browse_image(sceneid):
 
     result = do_query(sql)
 
-    return result[0][0]
+    return result[0]['Browse']
 
 
 def do_query(sql):
@@ -187,7 +190,7 @@ def do_query(sql):
     result = engine.execute(sql)
     result = result.fetchall()
     engine.dispose()
-    return result
+    return [dict(row) for row in result]
 
 
 class InvalidBoundingBoxError(Exception):

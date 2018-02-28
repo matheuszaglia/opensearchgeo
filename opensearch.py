@@ -48,6 +48,7 @@ def os_granule(output):
                                                  request.args.get('radiometricProcessing', None),
                                                  request.args.get('type', None),
                                                  request.args.get('band', None),
+                                                 request.args.get('dataset', None),
                                                  start_index, count)
     except inpe_data.InvalidBoundingBoxError:
         abort(400, 'Invalid bounding box')
@@ -68,6 +69,7 @@ def os_granule(output):
         resp.content_type = 'application/atom+xml' + output
 
     return resp
+
 
 @app.route('/collections.<string:output>')
 def os_dataset(output):
@@ -118,21 +120,19 @@ def os_dataset(output):
     return resp
 
 
-@app.route('/osdd/granule', defaults={'collection': None})
-@app.route('/osdd/granule/<string:collection>')
-def os_osdd_granule(collection):
+@app.route('/')
+@app.route('/osdd')
+@app.route('/osdd/granule')
+def os_osdd_granule():
     resp = make_response(render_template('osdd_granule.xml',
-                                         url=request.url_root,
-                                         collection=collection))
+                                         url=os.environ.get('BASE_URL'),
+                                         datasets=inpe_data.get_datasets()))
     resp.content_type = 'application/xml'
     return resp
 
 
-@app.route('/')
-@app.route('/osdd')
 @app.route('/osdd/collection')
 def os_osdd_collection():
-    abort(503)  # disabled at the moment
     resp = make_response(render_template('osdd_collection.xml', url=request.url_root))
     resp.content_type = 'application/xml'
     return resp
