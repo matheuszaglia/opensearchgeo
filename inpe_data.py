@@ -137,7 +137,7 @@ def make_geojson(data, output='json'):
         properties['id'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
         properties['updated'] = i['IngestDate']
         properties['alternate'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
-        properties['icon'] = '{}/browseimage/{}'.format(base_url, i['SceneId'])
+        properties['icon'] =  os.environ.get('ENCLOSURE_BASE') + get_browse_image(i['SceneId'])
         properties['via'] = '{}/metadata/{}'.format(base_url, i['SceneId'])
 
         for key, value in i.items():
@@ -165,19 +165,11 @@ def make_geojson(data, output='json'):
 def get_browse_image(sceneid):
     table = ''
 
-    if sceneid.startswith('L'):
-        table = 'LandsatBrowse'
-    elif sceneid.startswith('CB'):
-        table = 'CbersBrowse'
-    elif sceneid.startswith('A1') or sceneid.startswith('T1'):
-        table = 'ModisBrowse'
-    elif sceneid.startswith('P6'):
-        table = 'P6Browse'
-    sql = "SELECT `Browse` FROM {} WHERE `SceneId` = '{}'".format(table, sceneid)
+    sql = "SELECT `QLfilename` FROM `Qlook` WHERE `SceneId` = '{}'".format(sceneid)
 
     result = do_query(sql)
 
-    return result[0]['Browse']
+    return result[0]['QLfilename']
 
 
 def do_query(sql):
