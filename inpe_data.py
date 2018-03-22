@@ -137,7 +137,7 @@ def make_geojson(data, output='json'):
         properties['id'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
         properties['updated'] = i['IngestDate']
         properties['alternate'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
-        properties['icon'] =  os.environ.get('ENCLOSURE_BASE') + get_browse_image(i['SceneId'])
+        properties['icon'] = get_browse_image(i['SceneId'])
         properties['via'] = '{}/metadata/{}'.format(base_url, i['SceneId'])
 
         for key, value in i.items():
@@ -168,13 +168,14 @@ def get_browse_image(sceneid):
     sql = "SELECT `QLfilename` FROM `Qlook` WHERE `SceneId` = '{}'".format(sceneid)
 
     result = do_query(sql)
-
-    return result[0]['QLfilename']
+    if len(result) > 0:
+        return  os.environ.get('ENCLOSURE_BASE') + result[0]['QLfilename']
+    else:
+        return None
 
 
 def do_query(sql):
     connection = 'mysql://{}:{}@{}/{}'.format(os.environ.get('DB_USER'),
-
                                               os.environ.get('DB_PASS'),
                                               os.environ.get('DB_HOST'),
                                               os.environ.get('DB_NAME'))
