@@ -131,8 +131,29 @@ def make_geojson(data, output='json'):
            [i['TL_Longitude'], i['TL_Latitude']]]
         ]
 
+        if i['TL_Latitude'] > i['TR_Latitude']:
+             maxy = i['TL_Latitude']
+        else:
+             maxy = i['TR_Latitude']
+
+        if i['TR_Longitude'] > i['BR_Longitude']:
+             maxx = i['TR_Longitude']
+        else:
+             maxx = i['BR_Longitude']
+
+        if i['BL_Latitude'] < i['BR_Latitude']:
+             miny = i['BL_Latitude']
+        else:
+             miny = i['BR_Latitude']
+
+        if i['TL_Longitude'] < i['BL_Longitude']:
+             minx = i['TL_Longitude']
+        else:
+             minx = i['BL_Longitude']
+
         feature['geometry'] = geometry
         properties = dict()
+        properties['bbox'] = '{} {} {} {}'.format(miny, minx, maxy,maxx)
         properties['title'] = i['SceneId']
         properties['id'] = '{}/granule.{}?uid={}'.format(base_url, output, i['SceneId'])
         properties['updated'] = i['IngestDate']

@@ -4,7 +4,7 @@
         {% block content %}
 {% if request.args.get('bbox') is not none %}
     {% set minx, miny, maxx, maxy = request.args.get('bbox').split(',') %}
-    <georss:polygon>{{ miny }} {{ minx }} {{ miny }} {{ maxx }} {{ maxy }} {{ maxx }} {{ maxy }} {{ minx }} {{ miny }} {{ minx }}</georss:polygon>
+    <georss:box>{{ miny }} {{ minx }} {{ maxy }} {{ maxx }}</georss:box>
 {% endif %}
     <os:Query role="request" totalResults="{{ total_results }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
 {% if total_results > 0 %}{% for item in data.features %}<entry>
@@ -22,6 +22,9 @@
         <georss:polygon>
             {{ item.properties.TL_Latitude }} {{ item.properties.TL_Longitude }} {{ item.properties.TR_Latitude }} {{ item.properties.TR_Longitude }} {{ item.properties.BR_Latitude }} {{ item.properties.BR_Longitude }} {{ item.properties.BL_Latitude }} {{ item.properties.BL_Longitude }} {{ item.properties.TL_Latitude }} {{ item.properties.TL_Longitude}}
         </georss:polygon>
+        <georss:box>
+            {{ item.properties.bbox }}
+        </georss:box>
         <content type="html">
             <![CDATA[
             <a href="{{ item.properties.icon }}">
