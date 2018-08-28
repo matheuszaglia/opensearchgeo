@@ -6,7 +6,7 @@
     {% set minx, miny, maxx, maxy = request.args.get('bbox').split(',') %}
     <georss:polygon>{{ miny }} {{ minx }} {{ miny }} {{ maxx }} {{ maxy }} {{ maxx }} {{ maxy }} {{ minx }} {{ miny }} {{ minx }}</georss:polygon>
 {% endif %}
-    <os:Query role="request" totalResults="{{ total_results }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
+    <os:Query role="request" totalResults="{{ data.totalResults }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
 {% if total_results > 0 %}{% for item in data.features %}<entry>
         <title>
             {{ item.properties.title }}

@@ -41,15 +41,17 @@ def os_granule(output):
         count = int(count)
 
     try:
-        data, total_results = inpe_data.get_bbox(request.args.get('bbox', None),
-                                                 request.args.get('uid', None),
-                                                 request.args.get('start', None),
-                                                 request.args.get('end', None),
-                                                 request.args.get('radiometricProcessing', None),
-                                                 request.args.get('type', None),
-                                                 request.args.get('band', None),
-                                                 request.args.get('dataset', None),
-                                                 start_index, count)
+        data = inpe_data.get_bbox(request.args.get('bbox', None),
+                                  request.args.get('uid', None),
+                                  request.args.get('path', None),
+                                  request.args.get('row', None),
+                                  request.args.get('start', None),
+                                  request.args.get('end', None),
+                                  request.args.get('radiometricProcessing', None),
+                                  request.args.get('type', None),
+                                  request.args.get('band', None),
+                                  request.args.get('dataset', None),
+                                  start_index, count)
     except inpe_data.InvalidBoundingBoxError:
         abort(400, 'Invalid bounding box')
     except IOError:
@@ -57,17 +59,19 @@ def os_granule(output):
 
 
     if output == 'json':
-        return jsonify(data)
+        resp = jsonify(data)
+        resp.headers.add('Access-Control-Allow-Origin', '*')
+        return resp
 
     resp = make_response(render_template('granule.{}'.format(output),
                                          url=request.url.replace('&', '&amp;'),
-                                         data=data, total_results=total_results,
-                                         start_index=start_index, count=count,
+                                         data=data, start_index=start_index, count=count,
                                          url_root=os.environ.get('BASE_URL')))
 
     if output == 'atom':
         resp.content_type = 'application/atom+xml' + output
 
+    resp.headers.add('Access-Control-Allow-Origin', '*')
     return resp
 
 
@@ -117,6 +121,7 @@ def os_dataset(output):
     if output == 'atom':
         output = 'atom+xml'
     resp.content_type = 'application/' + output
+    resp.headers.add('Access-Control-Allow-Origin', '*')
     return resp
 
 
@@ -126,8 +131,12 @@ def os_dataset(output):
 def os_osdd_granule():
     resp = make_response(render_template('osdd_granule.xml',
                                          url=os.environ.get('BASE_URL'),
-                                         datasets=inpe_data.get_datasets()))
+                                         datasets=inpe_data.get_datasets(),
+                                         bands=inpe_data.get_bands(),
+                                         rps=inpe_data.get_radiometricProcessing(),
+                                         types=inpe_data.get_types()))
     resp.content_type = 'application/xml'
+    resp.headers.add('Access-Control-Allow-Origin', '*')
     return resp
 
 
@@ -135,6 +144,7 @@ def os_osdd_granule():
 def os_osdd_collection():
     resp = make_response(render_template('osdd_collection.xml', url=request.url_root))
     resp.content_type = 'application/xml'
+    resp.headers.add('Access-Control-Allow-Origin', '*')
     return resp
 
 
@@ -162,42 +172,48 @@ def scene(sceneid):
 
 @app.errorhandler(400)
 def handle_bad_request(e):
-    response = jsonify({'code': 400, 'message': 'Bad Request - {}'.format(e.description)})
-    response.status_code = 400
-    return response
+    resp = jsonify({'code': 400, 'message': 'Bad Request - {}'.format(e.description)})
+    resp.status_code = 400
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.errorhandler(404)
 def handle_page_not_found(e):
-    response = jsonify({'code': 404, 'message': 'Page not found'})
-    response.status_code = 404
-    return response
+    resp = jsonify({'code': 404, 'message': 'Page not found'})
+    resp.status_code = 404
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.errorhandler(500)
 def handle_api_error(e):
-    response = jsonify({'code': 500, 'message': 'Internal Server Error'})
-    response.status_code = 500
-    return response
+    resp = jsonify({'code': 500, 'message': 'Internal Server Error'})
+    resp.status_code = 500
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.errorhandler(502)
 def handle_bad_gateway_error(e):
-    response = jsonify({'code': 502, 'message': 'Bad Gateway'})
-    response.status_code = 502
-    return response
+    resp = jsonify({'code': 502, 'message': 'Bad Gateway'})
+    resp.status_code = 502
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.errorhandler(503)
 def handle_service_unavailable_error(e):
-    response = jsonify({'code': 503, 'message': 'Service Unavailable'})
-    response.status_code = 503
-    return response
+    resp = jsonify({'code': 503, 'message': 'Service Unavailable'})
+    resp.status_code = 503
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.errorhandler(Exception)
 def handle_exception(e):
     app.logger.exception(e)
-    response = jsonify({'code': 500, 'message': 'Internal Server Error'})
-    response.status_code = 500
-    return response
+    resp = jsonify({'code': 500, 'message': 'Internal Server Error'})
+    resp.status_code = 500
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp

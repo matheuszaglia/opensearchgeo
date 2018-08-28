@@ -13,7 +13,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 
-def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
+def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end=None,
              radiometric=None, image_type=None, band=None, dataset=None, start=0, count=10):
     sql = "SELECT s.*, DATE_FORMAT(s.`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
           "DATE_FORMAT(s.`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
@@ -26,23 +26,28 @@ def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
     if uid is not None and uid != "":
         where.append("s.`SceneId` = '{}'".format(uid))
 
+    if path is not None and path != "":
+        where.append("s.`Path` = '{}'".format(path))
+
+    if row is not None and row != "":
+        where.append("s.`Row` = '{}'".format(row))
+
     if bbox is not None and bbox != "":
         try:
             for x in bbox.split(','):
                 float(x)
             min_x, min_y, max_x, max_y = bbox.split(',')
 
-            bbox = list()
+            bbox = ""
+            bbox += "(({} <= `TR_Longitude` and {} <=`TR_Latitude`)".format(min_x, min_y)
+            bbox += " or "
+            bbox +=  "({} <= `BR_Longitude` and {} <=`TL_Latitude`))".format(min_x, min_y)
+            bbox += " and "
+            bbox += "(({} >= `BL_Longitude` and {} >=`BL_Latitude`)".format(max_x, max_y)
+            bbox += " or "
+            bbox +=  "({} >= `TL_Longitude` and {} >=`BR_Latitude`))".format(max_x, max_y)
 
-            bbox.append("({} >= `TL_Longitude` and {} <=`TL_Latitude`)".format(max_x, min_y))
-
-            bbox.append("({} <= `TR_Longitude` and {} <=`TR_Latitude`)".format(min_x, min_y))
-
-            bbox.append("({} >= `BL_Longitude` and {} >=`BL_Latitude`)".format(max_x, max_y))
-
-            bbox.append("({} <= `BR_Longitude` and {} >=`BR_Latitude`)".format(min_x, max_y))
-
-            where.append("(" + (" and ".join(bbox)) + ")")
+            where.append("(" + bbox + ")")
 
         except:
             raise (InvalidBoundingBoxError())
@@ -89,7 +94,7 @@ def get_bbox(bbox=None, uid=None, time_start=None, time_end=None,
     else:
         count = 0
 
-    return make_geojson(result), count
+    return make_geojson(result, result_len)
 
 
 def get_updated():
@@ -111,9 +116,24 @@ def get_datasets():
     result = do_query(sql)
     return result
 
+def get_bands():
+    sql = "SELECT DISTINCT `Band` FROM `Product`"
+    result = do_query(sql)
+    return result
 
-def make_geojson(data, output='json'):
+def get_radiometricProcessing():
+    sql = "SELECT DISTINCT `RadiometricProcessing` FROM `Product`"
+    result = do_query(sql)
+    return result
+
+def get_types():
+    sql = "SELECT DISTINCT `Type` FROM `Product`"
+    result = do_query(sql)
+    return result
+
+def make_geojson(data, totalResults, output='json'):
     geojson = dict()
+    geojson['totalResults'] = totalResults
     geojson['type'] = 'FeatureCollection'
     geojson['features'] = []
     base_url = os.environ.get('BASE_URL')
@@ -142,7 +162,7 @@ def make_geojson(data, output='json'):
 
         for key, value in i.items():
             if key != 'SceneId' and key != 'IngestDate':
-                properties[key] = value
+                properties[key.lower()] = value
 
         products = get_products(i['SceneId'])
 

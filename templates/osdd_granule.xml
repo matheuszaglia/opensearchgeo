@@ -9,14 +9,26 @@ xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
     <Tags>INPE granule</Tags>
     <Contact>mzaglia@dpi.inpe.br</Contact>
     <Url rel="result" type="application/atom+xml" template="{{ url }}/granule.atom?bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}&amp;band={band?}&amp;radiometricProcessing={radiometricProcessing?}&amp;type={type?}&amp;dataset={dataset?}">
-        <params:Parameter name="band" value="{band}" title="Identifies the product wave length"/>
-        <params:Parameter name="radiometricProcessing" value="{radiometricProcessing}" title="Type of radiometric processing used to generate the pixel value"/>
-        <params:Parameter name="type" value="{type}" title="Identifies the product type"/>
-        <params:Parameter name="dataset" value="{dataset}" title="Identifies the dataset of a product">
+        <Parameter name="band" value="{band}" title="Identifies the product wave length">
+            {% for option in bands %}
+            <Option value="{{ option.Band }}"/>
+            {% endfor %}
+        </Parameter>
+        <Parameter name="radiometricProcessing" value="{radiometricProcessing}" title="Type of radiometric processing used to generate the pixel value">
+            {% for option in rps %}
+            <Option value="{{ option.RadiometricProcessing }}"/>
+            {% endfor %}
+        </Parameter>
+        <Parameter name="type" value="{type}" title="Identifies the product type">
+            {% for option in types %}
+            <Option value="{{ option.Type }}"/>
+            {% endfor %}
+        </Parameter>
+        <Parameter name="dataset" value="{dataset}" title="Identifies the dataset of a product">
             {% for option in datasets %}
             <Option value="{{ option.Dataset }}"/>
             {% endfor %}
-        </params:Parameter>
+        </Parameter>
     </Url>
     <Query role="example" geo:box="-70,-50,-20,0" time:start="2014-01-01"
            time:end="2016-06-06" count="10" startIndex="1" title="INPE Granule Search"/>
