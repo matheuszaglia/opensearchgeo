@@ -14,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 
 
 def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end=None,
-             radiometric=None, image_type=None, band=None, dataset=None, start=0, count=10):
+             radiometric=None, image_type=None, band=None, dataset=None, cloud=None, start=0, count=10):
     sql = "SELECT s.*, DATE_FORMAT(s.`Date`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `Date`, " \
           "DATE_FORMAT(s.`IngestDate`,'%%Y-%%m-%%dT%%H:%%i:%%s') as `IngestDate` " \
           "FROM Scene AS s, Product AS p WHERE "
@@ -26,13 +26,17 @@ def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end
     if uid is not None and uid != "":
         where.append("s.`SceneId` = '{}'".format(uid))
 
+    withBbox = True
+
     if path is not None and path != "":
         where.append("s.`Path` = '{}'".format(path))
+        withBbox = False
 
     if row is not None and row != "":
         where.append("s.`Row` = '{}'".format(row))
+        withBbox = False
 
-    if bbox is not None and bbox != "":
+    if withBbox and bbox is not None and bbox != "":
         try:
             for x in bbox.split(','):
                 float(x)
@@ -62,6 +66,8 @@ def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end
     else:
         where.append("s.`Date` <= curdate()")
 
+    if cloud is not None and cloud != "":
+        where.append("s.`CloudCoverQ1` <= {}".format(cloud))
     if radiometric is not None and radiometric != "":
         where.append("p.`RadiometricProcessing` LIKE '%%{}%%'".format(radiometric))
     if image_type is not None and image_type != "":

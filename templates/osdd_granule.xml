@@ -8,7 +8,8 @@ xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
         OpenSearch Geo and Time extensions</Description>
     <Tags>INPE granule</Tags>
     <Contact>mzaglia@dpi.inpe.br</Contact>
-    <Url rel="result" type="application/atom+xml" template="{{ url }}/granule.atom?bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}&amp;band={band?}&amp;radiometricProcessing={radiometricProcessing?}&amp;type={type?}&amp;dataset={dataset?}">
+    <Contact>carolina.santos@inpe.br</Contact>
+    <Url rel="result" type="application/atom+xml" template="{{ url }}/granule.atom?bbox={geo:box?}&amp;uid={geo:uid?}&amp;count={count?}&amp;startIndex={startIndex?}&amp;start={time:start?}&amp;end={time:end?}&amp;band={band?}&amp;radiometricProcessing={radiometricProcessing?}&amp;type={type?}&amp;dataset={dataset?}&amp;row={row?}&amp;path={path?}&amp;cloud={cloud?}">
         <Parameter name="band" value="{band}" title="Identifies the product wave length">
             {% for option in bands %}
             <Option value="{{ option.Band }}"/>
@@ -29,6 +30,9 @@ xmlns:params="http://a9.com/-/spec/opensearch/extensions/parameters/1.0/">
             <Option value="{{ option.Dataset }}"/>
             {% endfor %}
         </Parameter>
+        <Parameter name="path" value="{path}" title="Identifies the product path number"></Parameter>
+        <Parameter name="row" value="{row}" title="Identifies the product row number"></Parameter>
+        <Parameter name="cloud" value="{cloud}" title="Identifies the product cloud coverage number"></Parameter>
     </Url>
     <Query role="example" geo:box="-70,-50,-20,0" time:start="2014-01-01"
            time:end="2016-06-06" count="10" startIndex="1" title="INPE Granule Search"/>

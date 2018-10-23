@@ -7,7 +7,7 @@
     <georss:polygon>{{ miny }} {{ minx }} {{ miny }} {{ maxx }} {{ maxy }} {{ maxx }} {{ maxy }} {{ minx }} {{ miny }} {{ minx }}</georss:polygon>
 {% endif %}
     <os:Query role="request" totalResults="{{ data.totalResults }}" {% for key, value in request.args.items() %} {{ key }}="{{ value }}"{% endfor %}/>
-{% if total_results > 0 %}{% for item in data.features %}<entry>
+{% if data.totalResults > 0 %}{% for item in data.features %}<entry>
         <title>
             {{ item.properties.title }}
         </title>
@@ -20,7 +20,7 @@
         <link rel="enclosure" href="{{ enc.url }}"  title="Type: {{ enc.type }} Radiometric Processing: {{ enc.radiometric_processing }}Band: {{ enc.band }} " type="image/tiff"/>
         {% endfor %}
         <georss:polygon>
-            {{ item.properties.TL_Latitude }} {{ item.properties.TL_Longitude }} {{ item.properties.TR_Latitude }} {{ item.properties.TR_Longitude }} {{ item.properties.BR_Latitude }} {{ item.properties.BR_Longitude }} {{ item.properties.BL_Latitude }} {{ item.properties.BL_Longitude }} {{ item.properties.TL_Latitude }} {{ item.properties.TL_Longitude}}
+            {{ item.properties.tl_latitude }} {{ item.properties.tl_longitude }} {{ item.properties.tr_latitude }} {{ item.properties.tr_longitude }} {{ item.properties.br_latitude }} {{ item.properties.br_longitude }} {{ item.properties.bl_latitude }} {{ item.properties.bl_longitude }} {{ item.properties.tl_latitude }} {{ item.properties.tl_longitude}}
         </georss:polygon>
         <content type="html">
             <![CDATA[
@@ -28,17 +28,17 @@
                 <img height="200" src="{{ item.properties.icon }}" align="right"/>
 	        </a>
 	        <ul>
-	          <li><b>Satellite :</b> {{ item.properties.Satellite }}</li>
-	          <li><b>Sensor :</b> {{ item.properties.Sensor }}</li>
-	          <li><b>Acquisition Date :</b> {{ item.properties.Date }}</li>
-	          <li><b>Path :</b> {{ item.properties.Path }}</li>
-	          <li><b>Row :</b> {{ item.properties.Row }}</li>
-	          <li><b>Orbit :</b> {{ item.properties.Orbit }}</li>
-	          <li><b>ImageOrientation :</b> {{ item.properties.ImageOrientation }}</li>
-	          <li><b>Cloud Cover Q1 :</b> {{ item.properties.CloudCoverQ1 }}</li>
-	          <li><b>Cloud Cover Q2 :</b> {{ item.properties.CloudCoverQ2 }}</li>
-	          <li><b>Cloud Cover Q3 :</b> {{ item.properties.CloudCoverQ3 }}</li>
-	          <li><b>Cloud Cover Q4 :</b> {{ item.properties.CloudCoverQ4 }}</li>
+	          <li><b>Satellite :</b> {{ item.properties.satellite }}</li>
+	          <li><b>Sensor :</b> {{ item.properties.sensor }}</li>
+	          <li><b>Acquisition Date :</b> {{ item.properties.date }}</li>
+	          <li><b>Path :</b> {{ item.properties.path }}</li>
+	          <li><b>Row :</b> {{ item.properties.row }}</li>
+	          <li><b>Orbit :</b> {{ item.properties.orbit }}</li>
+	          <li><b>ImageOrientation :</b> {{ item.properties.imageorientation }}</li>
+	          <li><b>Cloud Cover Q1 :</b> {{ item.properties.cloudcoverq1 }}</li>
+	          <li><b>Cloud Cover Q2 :</b> {{ item.properties.cloudcoverq2 }}</li>
+	          <li><b>Cloud Cover Q3 :</b> {{ item.properties.cloudcoverq3 }}</li>
+	          <li><b>Cloud Cover Q4 :</b> {{ item.properties.cloudcoverq4 }}</li>
             </ul>
             <a href="{{ item.properties.metadata }}"> Metadata </a>
             ]]>

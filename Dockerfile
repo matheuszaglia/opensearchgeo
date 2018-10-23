@@ -1,16 +1,17 @@
 FROM python:3-alpine
-MAINTAINER Carolina Galvão <carolina.santos_datainfo@inpe.br> 
+MAINTAINER Carolina Galvão <carolina.santos@inpe.br>
+MAINTAINER Matheus Zaglia <mzaglia@inpe.br> 
 
 # Install dependencies
 RUN apk update
 RUN apk add --no-cache gcc musl-dev mariadb-dev
 
 # Prepare work directory
-RUN mkdir -p /usr/src/osapp
-WORKDIR /usr/src/osapp
+RUN mkdir -p /app
+WORKDIR /app
 
 # Get opensearch source and install python requirements
-COPY requirements.txt /usr/src/osapp
+COPY requirements.txt /app
 RUN pip install -r requirements.txt
 
 # Setting environment variables

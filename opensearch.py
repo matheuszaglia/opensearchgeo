@@ -51,6 +51,7 @@ def os_granule(output):
                                   request.args.get('type', None),
                                   request.args.get('band', None),
                                   request.args.get('dataset', None),
+                                  request.args.get('cloud', None),
                                   start_index, count)
     except inpe_data.InvalidBoundingBoxError:
         abort(400, 'Invalid bounding box')
