@@ -20,6 +20,7 @@ def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end
           "FROM Scene AS s, Product AS p WHERE "
 
     where = list()
+    searchParams = dict()
 
     where.append('s.`SceneId` = p.`SceneId`')
 
@@ -70,12 +71,16 @@ def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end
         where.append("s.`CloudCoverQ1` <= {}".format(cloud))
     if radiometric is not None and radiometric != "":
         where.append("p.`RadiometricProcessing` LIKE '%%{}%%'".format(radiometric))
+        searchParams['RadiometricProcessing'] = radiometric
     if image_type is not None and image_type != "":
         where.append("p.`Type` LIKE '%%{}%%'".format(image_type))
+        searchParams['Type'] = image_type
     if band is not None and band != "":
         where.append("p.`Band` LIKE '%%{}%%'".format(band))
+        searchParams['Band'] = band
     if dataset is not None and dataset != "":
         where.append("p.`Dataset` LIKE '{}'".format(dataset))
+        searchParams['Dataset'] = dataset
 
     where = " and ".join(where)
 
@@ -100,7 +105,7 @@ def get_bbox(bbox=None, uid=None, path=None, row=None, time_start=None, time_end
     else:
         count = 0
 
-    return make_geojson(result, result_len)
+    return make_geojson(result, result_len, searchParams)
 
 
 def get_updated():
@@ -111,8 +116,10 @@ def get_updated():
     return result[0]['Date']
 
 
-def get_products(scene_id):
+def get_products(scene_id, searchParams):
     sql = "SELECT * FROM `Product` WHERE `SceneId` = '{}'".format(scene_id)
+    for key, value in searchParams.items():
+        sql += " AND `{}` = '{}'".format(key, value)
     result = do_query(sql)
     return result
 
@@ -137,7 +144,7 @@ def get_types():
     result = do_query(sql)
     return result
 
-def make_geojson(data, totalResults, output='json'):
+def make_geojson(data, totalResults, searchParams, output='json'):
     geojson = dict()
     geojson['totalResults'] = totalResults
     geojson['type'] = 'FeatureCollection'
@@ -170,7 +177,7 @@ def make_geojson(data, totalResults, output='json'):
             if key != 'SceneId' and key != 'IngestDate':
                 properties[key.lower()] = value
 
-        products = get_products(i['SceneId'])
+        products = get_products(i['SceneId'], searchParams)
 
         properties['enclosure'] = []
         for p in products:
